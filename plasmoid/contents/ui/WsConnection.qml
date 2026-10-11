@@ -22,11 +22,21 @@ Item {
 
     property ShaderSource shaderSource
 
+    // The last error output of the back-end, cleared once it sends data again.
+    property string error_message: ''
+
+    readonly property int minRestartDelay: 1000
+    readonly property int maxRestartDelay: 60000
+
     WebSocketServer {
         id: server
         listen: true
         onClientConnected: webSocket => {
-            webSocket.onTextMessageReceived.connect(message => queue.push(message))
+            webSocket.onTextMessageReceived.connect(message => {
+                error_message = ''
+                restartTimer.interval = minRestartDelay
+                queue.push(message)
+            })
         }
     }
 
@@ -57,12 +67,29 @@ Item {
     }
 
     P5Support.DataSource {
+        id: backEnd
         engine: 'executable'
         connectedSources: startBackEnd ? [startBackEnd] : []
+        // Called when the back-end exits, e.g. after the audio device disappeared.
         onNewData: (sourceName, data) => {
-            // Show back-end errors.
-            console.log(data.stdout)
-            console.log(data.stderr)
+            console.warn('panon back-end exited with code', data['exit code'], data.stdout, data.stderr)
+            // Show the exception of a python traceback. Other output may only be warnings, e.g. from ALSA.
+            error_message = data.stderr.includes('Traceback')
+                ? data.stderr.trim().split('\n').pop()
+                : i18n("Error: The audio back-end has stopped.")
+            disconnectSource(sourceName)
+            restartTimer.start()
+        }
+    }
+
+    // Restart the back-end, waiting longer after each failure in a row.
+    Timer {
+        id: restartTimer
+        interval: minRestartDelay
+        onTriggered: {
+            if (startBackEnd && backEnd.connectedSources.indexOf(startBackEnd) < 0)
+                backEnd.connectSource(startBackEnd)
+            interval = Math.min(interval * 2, maxRestartDelay)
         }
     }
 }

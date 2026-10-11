@@ -47,6 +47,7 @@ P5Support.DataSource {
                 1: i18n("Error: Find undeclared arguments."),
                 2: i18n("Error: Failed to compile the visual effect.") + "\n" + obj.log,
                 3: i18n("Error: Cannot find qsb. Please install the Qt 6 shader tools."),
+                4: i18n("Error: Invalid argument value:") + " " + obj.log,
             }[obj.error_code]
             return
         }

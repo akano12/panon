@@ -15,6 +15,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 from .helper import applet_effect_home, cache_dir, read_file
@@ -24,8 +25,12 @@ from .. import logger
 ERROR_UNDECLARED_ARGUMENT = 1
 ERROR_COMPILATION = 2
 ERROR_QSB_NOT_FOUND = 3
+ERROR_INVALID_ARGUMENT = 4
 
 QSB_ARGS = ['--glsl', '150,330,300 es']
+
+# Compiled shaders not used for this long are removed from the cache.
+CACHE_MAX_AGE = 30 * 24 * 3600
 
 _UNIFORM_RE = re.compile(r'^\s*uniform\s+(?:(?:lowp|mediump|highp)\s+)?(\w+)\s+(\w+)\s*;.*$', re.MULTILINE)
 _VERSION_RE = re.compile(r'^\s*#version\b.*$', re.MULTILINE)
@@ -39,12 +44,15 @@ class BuildError(Exception):
 
 
 def hex2vec4(value):
-    value = value.lstrip('#')
+    """
+    Convert #rrggbb or #aarrggbb to vec4(r,g,b,a).
+    """
+    if not re.fullmatch(r'#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})', value):
+        raise BuildError(ERROR_INVALID_ARGUMENT, value)
+    value = value[1:]
     nums = [int(value[i:i + 2], base=16) / 255 for i in range(0, len(value), 2)]
     if len(nums) < 4:
         nums.insert(0, 1)
-    assert len(nums) == 4
-    # #aarrggbb -> vec4(r,g,b,a)
     return "vec4(%f,%f,%f,%f)" % tuple(nums[1:] + nums[:1])
 
 
@@ -125,7 +133,10 @@ def compile_shader(source):
     cache_dir.mkdir(parents=True, exist_ok=True)
     frag_path = cache_dir / f'{digest}.frag'
     qsb_path = cache_dir / f'{digest}.frag.qsb'
-    if not qsb_path.exists():
+    if qsb_path.exists():
+        # Mark the shader as recently used, see prune_cache.
+        qsb_path.touch()
+    else:
         frag_path.write_text(source)
         result = subprocess.run([find_qsb(), *QSB_ARGS, '-o', str(qsb_path), str(frag_path)], capture_output=True, text=True)
         frag_path.unlink()
@@ -133,6 +144,15 @@ def compile_shader(source):
             qsb_path.unlink(missing_ok=True)
             raise BuildError(ERROR_COMPILATION, result.stdout + result.stderr)
     return qsb_path.as_uri()
+
+
+def prune_cache():
+    if not cache_dir.is_dir():
+        return
+    expiry = time.time() - CACHE_MAX_AGE
+    for path in cache_dir.glob('*.qsb'):
+        if path.stat().st_mtime < expiry:
+            path.unlink(missing_ok=True)
 
 
 def build_shader(files, main_file: Path, arguments_map):
@@ -194,6 +214,7 @@ def main():
         obj = {'error_code': e.code, 'log': e.log}
     json.dump(obj, sys.stdout)
     logger.log('obj : %s', json.dumps(obj))
+    prune_cache()
 
 
 if __name__ == '__main__':

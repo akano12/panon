@@ -141,7 +141,7 @@ Item {
             return i18n("Error: Failed to compile image shader.") + mainSE.log
         if (shaderSourceReader.enable_buffer && bufferSE.status == ShaderEffect.Error)
             return i18n("Error: Failed to compile bufffer shader.") + bufferSE.log
-        return ''
+        return wsConnection.error_message
     }
 
     PlasmaComponents.Label {
@@ -204,6 +204,7 @@ Item {
     }
 
     WsConnection {
+        id: wsConnection
         shaderSource: shaderSourceReader
         queue: messageQueue
     }
