@@ -8,6 +8,10 @@ import org.kde.plasma.plasma5support as P5Support
 import "../utils.js" as Utils
 
 KCM.SimpleKCM {
+    id: page
+
+    // Show changes in the widget before they are applied.
+    readonly property ConfigPreview preview: ConfigPreview { configPage: page }
 
     property alias cfg_reduceBass: reduceBass.checked
     property alias cfg_debugBackend: debugBackend.checked

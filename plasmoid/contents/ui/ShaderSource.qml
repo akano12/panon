@@ -10,7 +10,7 @@ import "utils.js" as Utils
 
 P5Support.DataSource {
 
-    readonly property var cfg: Plasmoid.configuration
+    required property var cfg
     engine: 'executable'
 
     property url image_shader_source: ''

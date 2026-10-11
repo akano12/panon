@@ -7,6 +7,10 @@ import org.kde.kcmutils as KCM
 import "../utils.js" as Utils
 
 KCM.SimpleKCM {
+    id: page
+
+    // Show changes in the widget before they are applied.
+    readonly property ConfigPreview preview: ConfigPreview { configPage: page }
 
     property alias cfg_colorSpaceHSL: colorSpaceHSL.checked
     property alias cfg_colorSpaceHSLuv: colorSpaceHSLuv.checked

@@ -7,6 +7,10 @@ import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
 
 KCM.SimpleKCM {
+    id: page
+
+    // Show changes in the widget before they are applied.
+    readonly property ConfigPreview preview: ConfigPreview { configPage: page }
 
     readonly property bool vertical: Plasmoid.formFactor == PlasmaCore.Types.Vertical
 

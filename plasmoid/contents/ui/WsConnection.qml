@@ -16,7 +16,7 @@ import "utils.js" as Utils
  */
 Item {
 
-    readonly property var cfg: Plasmoid.configuration
+    required property var cfg
 
     property MessageQueue queue
 

@@ -12,6 +12,9 @@ import "../utils.js" as Utils
 KCM.SimpleKCM {
     id: page
 
+    // Show changes in the widget before they are applied.
+    readonly property ConfigPreview preview: ConfigPreview { configPage: page }
+
     property string cfg_visualEffect
     property var cfg_effectArgValues: []
 

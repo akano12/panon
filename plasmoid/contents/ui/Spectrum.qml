@@ -7,7 +7,14 @@ import org.kde.plasma.components as PlasmaComponents
 
 Item {
     id: root
-    readonly property var cfg: Plasmoid.configuration
+    // The saved configuration, with the unapplied changes of the configuration dialog on top.
+    readonly property var cfg: {
+        const config = Plasmoid.configuration
+        const values = {}
+        for (const key of config.keys())
+            values[key] = config[key]
+        return Object.assign(values, config.livePreview)    // see config/ConfigPreview.qml
+    }
 
     readonly property bool vertical: Plasmoid.formFactor == PlasmaCore.Types.Vertical
 
@@ -178,7 +185,10 @@ Item {
         }
     }
 
-    ShaderSource { id: shaderSourceReader }
+    ShaderSource {
+        id: shaderSourceReader
+        cfg: root.cfg
+    }
 
     MessageQueue {
         id: messageQueue
@@ -205,6 +215,7 @@ Item {
 
     WsConnection {
         id: wsConnection
+        cfg: root.cfg
         shaderSource: shaderSourceReader
         queue: messageQueue
     }
