@@ -6,9 +6,6 @@ import QtQuick
  */
 
 Item {
-    // When only spectrum data is enabled, receive raw data to reduce cpu usage.
-    property bool only_spectrum: false
-
     property PreloadingTextures imgsReady: pt0
 
     property PreloadingTextures imgsLoading: pt0
@@ -21,15 +18,15 @@ Item {
         if (!imgsLoading.used)
             return
 
+        // When only spectrum data is enabled, the back-end sends the raw data uri
+        // instead of JSON to reduce cpu usage. Detect the format per message, as a
+        // previous back-end may still be sending the other format after the effect changed.
+        const obj = message.startsWith('{') ? JSON.parse(message) : { spectrum: message }
+
         imgsLoading.used = false
-        if (only_spectrum) {
-            imgsLoading.s.source = 'data:' + message
-        } else {
-            const obj = JSON.parse(message)
-            imgsLoading.s.source = obj.spectrum ? 'data:' + obj.spectrum : ''
-            imgsLoading.w.source = 'data:' + obj.wave
-            imgsLoading.beat = obj.beat
-        }
+        imgsLoading.s.source = obj.spectrum ? 'data:' + obj.spectrum : ''
+        imgsLoading.w.source = obj.wave ? 'data:' + obj.wave : ''
+        imgsLoading.beat = obj.beat ?? 0
 
         // Images may be loaded synchronously, in which case ready never changes.
         if (imgsLoading.ready)

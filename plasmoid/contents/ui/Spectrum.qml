@@ -176,7 +176,6 @@ Item {
 
     MessageQueue {
         id: messageQueue
-        only_spectrum: shaderSourceReader.enable_iChannel1 && !shaderSourceReader.enable_iChannel0
         onImgsReadyChanged: {
             audioAvailable = imgsReady.audioAvailable
             const time_current_frame = Date.now()
