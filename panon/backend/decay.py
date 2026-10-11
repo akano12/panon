@@ -8,16 +8,14 @@ class Decay:
         self.min_sample = 10
         self.max_sample = self.min_sample
 
-        self.local_max = None
-
     def process(self, fft):
+        if fft is None:
+            return None
+
         exp = 2
         retain = (1 - self.global_decay)**exp
         global_decay = 1 - retain
         global_max = self.max_sample**(1 / exp)
-
-        if fft is None:
-            return None
 
         vol = self.min_sample + np.mean(fft**exp)
         self.max_sample = self.max_sample * retain + vol * global_decay

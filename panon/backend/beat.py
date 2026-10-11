@@ -1,6 +1,8 @@
+import importlib.util
+
+
 def canImportAubio():
-    import importlib
-    return importlib.find_loader('aubio') is not None
+    return importlib.util.find_spec('aubio') is not None
 
 
 class BeatsDetector:
@@ -16,17 +18,3 @@ class BeatsDetector:
 
     def isBeat(self, samples):
         return float(self.a_tempo(samples.reshape((self.hop_s, )))[0])
-
-
-if __name__ == '__main__':
-    channels = 2
-    samplerate = 44100
-    fps = 60
-    from . import source
-    spectrum_source = source.SoundCardSource(channels, samplerate, 'default', fps)
-    beatsDetector = BeatsDetector(channels, samplerate, fps)
-
-    while True:
-        data = spectrum_source.read()
-        b = beatsDetector.isBeat(data)
-        print(b)

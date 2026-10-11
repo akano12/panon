@@ -1,19 +1,14 @@
-import QtQuick 2.0
-import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core 2.0 as PlasmaCore
+import QtQuick
+import org.kde.plasma.plasmoid
+import org.kde.plasma.core as PlasmaCore
 
-Item {
+PlasmoidItem {
+    // Always show the spectrum inline, never as a popup.
+    preferredRepresentation: fullRepresentation
+    fullRepresentation: Spectrum {}
 
-    readonly property var cfg:plasmoid.configuration
-
-    Plasmoid.preferredRepresentation: Plasmoid.compactRepresentation
-
-    Plasmoid.compactRepresentation: Spectrum{}
-
-    Plasmoid.toolTipItem: cfg.hideTooltip?tooltipitem:null
+    toolTipMainText: Plasmoid.configuration.hideTooltip ? "" : Plasmoid.title
+    toolTipSubText: Plasmoid.configuration.hideTooltip ? "" : Plasmoid.metaData.description
 
     Plasmoid.backgroundHints: PlasmaCore.Types.DefaultBackground | PlasmaCore.Types.ConfigurableBackground
-
-    Item{id:tooltipitem}
-
 }

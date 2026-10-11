@@ -14,10 +14,6 @@ class Spectrum:
         self.history = np.zeros((self.fft_size * HISTORY_LENGTH, NUM_CHANNEL), dtype='int16')
         self.history_index = 0
 
-    def get_max_wave_size(self):
-        len_history, num_channel = self.history.shape
-        return len_history * num_channel
-
     def updateHistory(self, data):
         len_history, num_channel = self.history.shape
 
@@ -25,7 +21,6 @@ class Spectrum:
             len_data, _ = data.shape
 
             index = self.history_index
-            #assert len_data < len_history
 
             if index + len_data > len_history:
                 self.history[index:] = data[:len_history - index]
@@ -62,13 +57,7 @@ class Spectrum:
         if reduceBass and weight_from:
             size_output, _ = result.shape
             result = result * np.arange(weight_from, weight_to, (weight_to - weight_from) / size_output)[:size_output, np.newaxis]
-        debug = False
-        if debug:
-            #add splitters
-            result = np.concatenate([result, np.zeros((8, 2))], axis=0)
-            return result
-        else:
-            return result
+        return result
 
     def computeSpectrum(
         self,
@@ -85,9 +74,6 @@ class Spectrum:
         elif bassResolutionLevel == 1:
             # higher resolution and latency for lower frequency
             fft_freq = [
-            #self.fun(data_history, 250, 4000, 0.25),    # 25px
-            #self.fun(data_history, 200, 250, 0.5),    # 25px
-            #self.fun(data_history, 150, 200, 1),    # 50px
                 self.fun(data_history, 110, 150, 2),    #   6600-9000Hz 80px
                 self.fun(data_history, 80, 110, 3),    #   4800-6600Hz 90px
                 self.fun(data_history, 50, 80, 4),    #   3000-4800Hz 120px
