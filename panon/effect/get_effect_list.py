@@ -23,7 +23,7 @@ def _get_shaders(root: Path, root_id):
             yield Effect(
                 path.name,
                 # generate unique effect identities
-                str(root_id) + '.' + path.name.replace(' ', '_').replace('"', '__').replace("'", '___').replace("$", '____'),
+                f'{root_id}.' + path.name.replace(' ', '_').replace('"', '__').replace("'", '___').replace('$', '____'),
                 str(path.absolute()),
             )
 
@@ -32,7 +32,7 @@ def get_list():
     """
     Returns an array of all available visual effects.
     """
-    return sorted(effect for effect_dir_id, effect_dir in enumerate(effect_dirs) for effect in _get_shaders(effect_dir, effect_dir_id))
+    return sorted(effect for root_id, root in enumerate(effect_dirs) for effect in _get_shaders(root, root_id))
 
 
 def find(effect_id):

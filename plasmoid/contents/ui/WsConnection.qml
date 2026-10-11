@@ -60,7 +60,7 @@ Item {
         const cmd = Utils.pythonCommand('panon.backend.client', args)
         if (cfg.debugBackend) {
             // Let the user start the back-end manually to see its output.
-            console.log('Executing: ' + cmd)
+            console.warn('Executing: ' + cmd)
             return ''
         }
         return cmd

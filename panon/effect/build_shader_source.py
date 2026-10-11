@@ -34,6 +34,7 @@ CACHE_MAX_AGE = 30 * 24 * 3600
 
 _UNIFORM_RE = re.compile(r'^\s*uniform\s+(?:(?:lowp|mediump|highp)\s+)?(\w+)\s+(\w+)\s*;.*$', re.MULTILINE)
 _VERSION_RE = re.compile(r'^\s*#version\b.*$', re.MULTILINE)
+_COMMENT_RE = re.compile(r'//[^\n]*|/\*.*?\*/', re.DOTALL)
 
 
 class BuildError(Exception):
@@ -106,7 +107,8 @@ def to_qsb_glsl(source):
     head = '#version 440\nlayout(std140, binding = 0) uniform buf {\n'
     head += ''.join(f'    {type_} {name};\n' for name, type_ in uniforms.items())
     head += '};\n'
-    head += ''.join(f'layout(binding = {binding}) uniform {type_} {name};\n' for binding, (name, type_) in enumerate(samplers.items(), 1))
+    for binding, (name, type_) in enumerate(samplers.items(), 1):
+        head += f'layout(binding = {binding}) uniform {type_} {name};\n'
     return head + body
 
 
@@ -138,7 +140,8 @@ def compile_shader(source):
         qsb_path.touch()
     else:
         frag_path.write_text(source)
-        result = subprocess.run([find_qsb(), *QSB_ARGS, '-o', str(qsb_path), str(frag_path)], capture_output=True, text=True)
+        command = [find_qsb(), *QSB_ARGS, '-o', str(qsb_path), str(frag_path)]
+        result = subprocess.run(command, capture_output=True, text=True)
         frag_path.unlink()
         if result.returncode != 0:
             qsb_path.unlink(missing_ok=True)
@@ -158,8 +161,9 @@ def prune_cache():
 def build_shader(files, main_file: Path, arguments_map):
     if not main_file.exists():
         return ''
-    source = ''.join(substitute_arguments(read_file(path), arguments_map) if path == main_file else read_file(path) for path in files)
-    return compile_shader(source)
+    sources = [read_file(path) for path in files]
+    sources[files.index(main_file)] = substitute_arguments(sources[files.index(main_file)], arguments_map)
+    return compile_shader(''.join(sources))
 
 
 def build(effect, argument_values):
@@ -176,9 +180,11 @@ def build(effect, argument_values):
         value = argument_values[index] if index < len(argument_values) else arg['default']
         arguments_map[arg['name']] = format_value(arg.get('type'), value)
 
+    # The data channels used by the effect, ignoring the ones only mentioned in comments.
     effect_source = read_file(image_shader_path)
     if buffer_shader_path.exists():
         effect_source += read_file(buffer_shader_path)
+    effect_source = _COMMENT_RE.sub('', effect_source)
 
     texture_path = effect_path / 'texture.png'
     return {

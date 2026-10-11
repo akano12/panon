@@ -1,6 +1,7 @@
 import numpy as np
 
 NUM_CHANNEL = 2
+SAMPLE_RATE = 44100
 HISTORY_LENGTH = 32 * 8
 
 # Frequency bands of each bass resolution level (see ConfigBackend.qml), from high to low frequency.
@@ -38,7 +39,7 @@ BANDS = {
 
 
 class Spectrum:
-    def __init__(self, fft_size=44100 // 60):
+    def __init__(self, fft_size=SAMPLE_RATE // 60):
         self.fft_size = fft_size
 
         self.history = np.zeros((self.fft_size * HISTORY_LENGTH, NUM_CHANNEL), dtype='int16')
@@ -70,7 +71,8 @@ class Spectrum:
         result = fft[int(freq_from * latency):int(freq_to * latency)]
         if weight_from is not None:
             size_output, _ = result.shape
-            result = result * np.arange(weight_from, weight_to, (weight_to - weight_from) / size_output)[:size_output, np.newaxis]
+            weights = np.arange(weight_from, weight_to, (weight_to - weight_from) / size_output)[:size_output]
+            result = result * weights[:, np.newaxis]
         return result
 
     def computeSpectrum(self, data_history, bassResolutionLevel, reduceBass=False):

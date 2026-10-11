@@ -17,4 +17,4 @@ cache_dir = Path(_cache_home) / 'panon'
 
 
 def read_file(path: Path):
-    return path.read_bytes().decode(errors='ignore')
+    return path.read_text(encoding='utf-8', errors='ignore')

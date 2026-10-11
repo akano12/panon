@@ -12,7 +12,6 @@ KCM.SimpleKCM {
 
     property alias cfg_fps: fps.value
     property alias cfg_showFps: showFps.checked
-    property alias cfg_hideTooltip: hideTooltip.checked
 
     property alias cfg_preferredWidth: preferredWidth.value
     property alias cfg_autoExtend: autoExtend.checked
@@ -34,7 +33,7 @@ KCM.SimpleKCM {
         }
 
         QQC2.Label {
-            text: i18n("Lower FPS saves CPU and battries.")
+            text: i18n("Lower FPS saves CPU and batteries.")
         }
 
         QQC2.CheckBox {
@@ -91,11 +90,6 @@ KCM.SimpleKCM {
         QQC2.CheckBox {
             id: inversion
             text: i18nc("@option:check", "Flip")
-        }
-
-        QQC2.CheckBox {
-            id: hideTooltip
-            text: i18nc("@option:check", "Hide tooltip")
         }
 
         QQC2.Label {

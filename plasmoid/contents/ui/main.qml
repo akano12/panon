@@ -7,8 +7,5 @@ PlasmoidItem {
     preferredRepresentation: fullRepresentation
     fullRepresentation: Spectrum {}
 
-    toolTipMainText: Plasmoid.configuration.hideTooltip ? "" : Plasmoid.title
-    toolTipSubText: Plasmoid.configuration.hideTooltip ? "" : Plasmoid.metaData.description
-
     Plasmoid.backgroundHints: PlasmaCore.Types.DefaultBackground | PlasmaCore.Types.ConfigurableBackground
 }

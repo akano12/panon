@@ -31,10 +31,8 @@ P5Support.DataSource {
     connectedSources: [cmd]
 
     onNewData: (sourceName, data) => {
-        if (cfg.debugBackend) {
-            console.log(cmd)
-            console.log(data.stderr)
-        }
+        if (cfg.debugBackend)
+            console.warn(cmd, data.stderr)
         let obj
         try {
             obj = JSON.parse(data.stdout)

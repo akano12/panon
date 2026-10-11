@@ -140,7 +140,7 @@ Item {
         if (mainSE.status == ShaderEffect.Error)
             return i18n("Error: Failed to compile image shader.") + mainSE.log
         if (shaderSourceReader.enable_buffer && bufferSE.status == ShaderEffect.Error)
-            return i18n("Error: Failed to compile bufffer shader.") + bufferSE.log
+            return i18n("Error: Failed to compile buffer shader.") + bufferSE.log
         return wsConnection.error_message
     }
 

@@ -17,8 +17,7 @@ from . import source
 from .convertor import Numpy2Str
 from .decay import Decay
 from .. import logger
-
-SAMPLE_RATE = 44100
+from .spectrum import NUM_CHANNEL, SAMPLE_RATE
 
 
 def compress(values, knee=0.6):
@@ -46,10 +45,10 @@ def parse_args():
 
 def create_source(args):
     if args.backend == 'pyaudio':
-        return source.PyaudioSource(spectrum.NUM_CHANNEL, SAMPLE_RATE, args.fps)
+        return source.PyaudioSource(NUM_CHANNEL, SAMPLE_RATE, args.fps)
     if args.backend == 'fifo':
-        return source.FifoSource(spectrum.NUM_CHANNEL, SAMPLE_RATE, args.fifo_path, args.fps)
-    return source.SoundCardSource(spectrum.NUM_CHANNEL, SAMPLE_RATE, args.device, args.fps)
+        return source.FifoSource(NUM_CHANNEL, SAMPLE_RATE, args.fifo_path, args.fps)
+    return source.SoundCardSource(NUM_CHANNEL, SAMPLE_RATE, args.device, args.fps)
 
 
 def create_beats_detector(args):
@@ -58,7 +57,7 @@ def create_beats_detector(args):
         return None
     from .beat import BeatsDetector
     try:
-        return BeatsDetector(spectrum.NUM_CHANNEL, SAMPLE_RATE, args.fps)
+        return BeatsDetector(NUM_CHANNEL, SAMPLE_RATE, args.fps)
     except ImportError:    # aubio is optional
         return None
 
@@ -86,7 +85,7 @@ async def mainloop(args, spectrum_source, beats_detector):
                 latest_wave_data = np.clip(latest_wave_data * 32767, -32768, 32767).astype('int16')
 
             wave_hist = spec.updateHistory(latest_wave_data)
-            data = spec.computeSpectrum(wave_hist, bassResolutionLevel=args.bass_resolution_level, reduceBass=args.reduce_bass)
+            data = spec.computeSpectrum(wave_hist, args.bass_resolution_level, args.reduce_bass)
             spectrum_data = decay.process(data)
 
             audio_available = spectrum_data is not None
