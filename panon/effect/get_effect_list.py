@@ -18,13 +18,13 @@ Effect = collections.namedtuple('Effect', 'name id path')
 def _get_shaders(root: Path, root_id):
     if not root.is_dir():
         return
-    for _file in root.iterdir():
-        if _file.suffix == '.frag' or any(_file.glob('*.frag')):
+    for path in root.iterdir():
+        if path.suffix == '.frag' or any(path.glob('*.frag')):
             yield Effect(
-                _file.name,
+                path.name,
                 # generate unique effect identities
-                str(root_id) + '.' + _file.name.replace(' ', '_').replace('"', '__').replace("'", '___').replace("$", '____'),
-                str(_file.absolute()),
+                str(root_id) + '.' + path.name.replace(' ', '_').replace('"', '__').replace("'", '___').replace("$", '____'),
+                str(path.absolute()),
             )
 
 

@@ -6,13 +6,13 @@ import QtQuick
  */
 
 Item {
-    property PreloadingTextures imgsReady: pt0
+    property PreloadingTextures imgsReady: textures0
 
-    property PreloadingTextures imgsLoading: pt0
+    property PreloadingTextures imgsLoading: textures0
 
     function push(message) {
         if (message.length < 1) {
-            imgsReady = nt
+            imgsReady = silence
             return
         }
         if (!imgsLoading.used)
@@ -24,8 +24,8 @@ Item {
         const obj = message.startsWith('{') ? JSON.parse(message) : { spectrum: message }
 
         imgsLoading.used = false
-        imgsLoading.s.source = obj.spectrum ? 'data:' + obj.spectrum : ''
-        imgsLoading.w.source = obj.wave ? 'data:' + obj.wave : ''
+        imgsLoading.spectrum.source = obj.spectrum ? 'data:' + obj.spectrum : ''
+        imgsLoading.wave.source = obj.wave ? 'data:' + obj.wave : ''
         imgsLoading.beat = obj.beat ?? 0
 
         // Images may be loaded synchronously, in which case ready never changes.
@@ -35,14 +35,14 @@ Item {
 
     function loaded(textures) {
         imgsReady = textures
-        imgsLoading = textures === pt0 ? pt1 : pt0
+        imgsLoading = textures === textures0 ? textures1 : textures0
         imgsLoading.used = true
     }
 
-    PreloadingTextures { id: nt; audioAvailable: false }
+    PreloadingTextures { id: silence; audioAvailable: false }
 
-    PreloadingTextures { id: pt0; onReadyChanged: if (ready) loaded(pt0) }
+    PreloadingTextures { id: textures0; onReadyChanged: if (ready) loaded(textures0) }
 
-    PreloadingTextures { id: pt1; onReadyChanged: if (ready) loaded(pt1) }
+    PreloadingTextures { id: textures1; onReadyChanged: if (ready) loaded(textures1) }
 
 }

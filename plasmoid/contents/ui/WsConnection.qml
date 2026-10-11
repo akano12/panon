@@ -3,6 +3,7 @@ import QtWebSockets
 import org.kde.plasma.plasmoid
 import org.kde.plasma.plasma5support as P5Support
 import "utils.js" as Utils
+
 /*
  * This module starts a python back-end client,
  * and pushes messages from the client to a queue.
@@ -30,13 +31,13 @@ Item {
     }
 
     readonly property string startBackEnd: {
-        if (server.port == 0) return ''
-        if (shaderSource.image_shader_source.toString() == '') return ''
+        if (server.port === 0 || !shaderSource.loaded)
+            return ''
         const backend = ['pyaudio', 'soundcard', 'fifo'][cfg.backendIndex]
         const args = [server.url.toString(), '--backend=' + backend]
-        if (backend == 'soundcard')
+        if (backend === 'soundcard')
             args.push('--device=' + cfg.pulseaudioDevice)
-        if (backend == 'fifo')
+        if (backend === 'fifo')
             args.push('--fifo-path=' + cfg.fifoPath)
         args.push('--fps=' + cfg.fps)
         if (cfg.reduceBass)
@@ -64,5 +65,4 @@ Item {
             console.log(data.stderr)
         }
     }
-
 }

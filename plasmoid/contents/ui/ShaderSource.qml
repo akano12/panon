@@ -22,7 +22,8 @@ P5Support.DataSource {
     property url texture_uri: ''
     property string error_message: ''
 
-    readonly property bool enable_buffer: buffer_shader_source.toString().length > 0
+    readonly property bool loaded: image_shader_source.toString() !== ''
+    readonly property bool enable_buffer: buffer_shader_source.toString() !== ''
 
     readonly property string cmd: Utils.pythonCommand('panon.effect.build_shader_source',
         [JSON.stringify([cfg.visualEffect, cfg.effectArgValues])])
@@ -38,12 +39,7 @@ P5Support.DataSource {
         try {
             obj = JSON.parse(data.stdout)
         } catch (e) {
-            console.log("JSON parse error")
-            console.log("Executed command:")
-            console.log(cmd)
-            console.log("JSON content:")
-            console.log(data.stdout)
-            console.log(data.stderr)
+            console.warn("Failed to build the visual effect:", cmd, data.stdout, data.stderr)
             return
         }
         if ('error_code' in obj) {

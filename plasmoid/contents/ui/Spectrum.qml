@@ -11,6 +11,13 @@ Item {
 
     readonly property bool vertical: Plasmoid.formFactor == PlasmaCore.Types.Vertical
 
+    property bool audioAvailable
+    property string fps_message: ""
+
+    property double time_first_frame: Date.now()
+    property double time_fps_start: Date.now()
+    property double time_prev_frame: Date.now()
+
     Layout.preferredWidth: vertical ? -1 : animatedMinimum
     Layout.preferredHeight: vertical ? animatedMinimum : -1
     Layout.maximumWidth: cfg.autoHide ? Layout.preferredWidth : -1
@@ -31,7 +38,7 @@ Item {
         return 1
     }
 
-    property int animatedMinimum: (!cfg.autoHide) || audioAvailable ? cfg.preferredWidth : 0
+    property int animatedMinimum: !cfg.autoHide || audioAvailable ? cfg.preferredWidth : 0
 
     Behavior on animatedMinimum {
         enabled: cfg.animateAutoHiding
@@ -41,8 +48,8 @@ Item {
         }
     }
 
-    Layout.fillWidth: vertical ? false : cfg.autoExtend
-    Layout.fillHeight: vertical ? cfg.autoExtend : false
+    Layout.fillWidth: !vertical && cfg.autoExtend
+    Layout.fillHeight: vertical && cfg.autoExtend
 
     ShaderEffect {
         id: mainSE
@@ -87,7 +94,7 @@ Item {
 
         anchors.fill: parent
         // Avoid rendering with Qt's default shader before the effect is built.
-        visible: shaderSourceReader.image_shader_source.toString() !== ''
+        visible: shaderSourceReader.loaded
         blending: true
         fragmentShader: shaderSourceReader.image_shader_source
     }
@@ -128,7 +135,7 @@ Item {
     readonly property string error_message: {
         if (shaderSourceReader.error_message)
             return shaderSourceReader.error_message
-        if (shaderSourceReader.image_shader_source.toString() == '')
+        if (!shaderSourceReader.loaded)
             return i18n("Error: Failed to load the visual effect. Please choose another visual effect in the configuration dialog.")
         if (mainSE.status == ShaderEffect.Error)
             return i18n("Error: Failed to compile image shader.") + mainSE.log
@@ -136,7 +143,6 @@ Item {
             return i18n("Error: Failed to compile bufffer shader.") + bufferSE.log
         return ''
     }
-    property string fps_message: ""
 
     PlasmaComponents.Label {
         anchors.fill: parent
@@ -187,8 +193,8 @@ Item {
                 time_fps_start = time_current_frame
             }
 
-            mainSE.iChannel0 = imgsReady.w
-            mainSE.iChannel1 = imgsReady.s
+            mainSE.iChannel0 = imgsReady.wave
+            mainSE.iChannel1 = imgsReady.spectrum
             mainSE.iBeat = imgsReady.beat
             if (shaderSourceReader.enable_buffer)
                 bufferSES.scheduleUpdate()
@@ -201,10 +207,4 @@ Item {
         shaderSource: shaderSourceReader
         queue: messageQueue
     }
-
-    property bool audioAvailable
-
-    property double time_first_frame: Date.now()
-    property double time_fps_start: Date.now()
-    property double time_prev_frame: Date.now()
 }

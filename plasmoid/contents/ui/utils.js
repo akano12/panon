@@ -22,6 +22,6 @@ function pythonCommand(module, args) {
 }
 
 function random(seed) {
-    var x = Math.sin(seed*1000) * 10000;
-    return x - Math.floor(x);
+    const x = Math.sin(seed * 1000) * 10000
+    return x - Math.floor(x)
 }

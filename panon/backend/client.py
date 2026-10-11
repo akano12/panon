@@ -47,10 +47,11 @@ def create_beats_detector(args):
     # aubio requires float samples, which are only provided by the soundcard back-end.
     if args.backend != 'soundcard':
         return None
-    from . import beat
-    if not beat.canImportAubio():
+    from .beat import BeatsDetector
+    try:
+        return BeatsDetector(spectrum.NUM_CHANNEL, SAMPLE_RATE, args.fps)
+    except ImportError:    # aubio is optional
         return None
-    return beat.BeatsDetector(spectrum.NUM_CHANNEL, SAMPLE_RATE, args.fps)
 
 
 async def mainloop(args, spectrum_source, beats_detector):
