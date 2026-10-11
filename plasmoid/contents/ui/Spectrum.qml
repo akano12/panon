@@ -31,10 +31,7 @@ Item {
     property Item iChannel0
     property Item iChannel1
     readonly property Item iChannel2: bufferSES
-    readonly property Item iChannel3: Image {
-        visible: false
-        source: shaderSourceReader.texture_uri
-    }
+    readonly property Item iChannel3: textureImage
 
     property double time_first_frame: Date.now()
     property double time_fps_start: Date.now()
@@ -73,30 +70,32 @@ Item {
     Layout.fillWidth: !vertical && cfg.autoExtend
     Layout.fillHeight: vertical && cfg.autoExtend
 
-    ShadertoyEffect {
-        id: mainSE
-        inputs: root
-
-        Behavior on hueFrom { NumberAnimation { duration: 1000 } }
-        Behavior on hueTo { NumberAnimation { duration: 1000 } }
-        Behavior on saturation { NumberAnimation { duration: 1000 } }
-        Behavior on lightness { NumberAnimation { duration: 1000 } }
-
-        // Color space: HSL (0), HSLuv (1)
-        readonly property int colorSpace: cfg.colorSpaceHSLuv ? 1 : 0
-        property int hueFrom: cfg.colorSpaceHSLuv ? cfg.hsluvHueFrom : cfg.hslHueFrom
-        property int hueTo: cfg.colorSpaceHSLuv ? cfg.hsluvHueTo : cfg.hslHueTo
-        property int saturation: cfg.colorSpaceHSLuv ? cfg.hsluvSaturation : cfg.hslSaturation
-        property int lightness: cfg.colorSpaceHSLuv ? cfg.hsluvLightness : cfg.hslLightness
-
-        readonly property int coord_gravity: root.gravity
-        readonly property int coord_inversion: cfg.inversion ? 1 : 0
-
+    // Created once the effect is built, so that Qt's default shader is never used.
+    Loader {
+        id: mainLoader
         anchors.fill: parent
-        // Avoid rendering with Qt's default shader before the effect is built.
-        visible: shaderSourceReader.loaded
-        blending: true
-        fragmentShader: shaderSourceReader.image_shader_source
+        active: shaderSourceReader.loaded
+        sourceComponent: ShadertoyEffect {
+            inputs: root
+
+            Behavior on hueFrom { NumberAnimation { duration: 1000 } }
+            Behavior on hueTo { NumberAnimation { duration: 1000 } }
+            Behavior on saturation { NumberAnimation { duration: 1000 } }
+            Behavior on lightness { NumberAnimation { duration: 1000 } }
+
+            // Color space: HSL (0), HSLuv (1)
+            readonly property int colorSpace: cfg.colorSpaceHSLuv ? 1 : 0
+            property int hueFrom: cfg.colorSpaceHSLuv ? cfg.hsluvHueFrom : cfg.hslHueFrom
+            property int hueTo: cfg.colorSpaceHSLuv ? cfg.hsluvHueTo : cfg.hslHueTo
+            property int saturation: cfg.colorSpaceHSLuv ? cfg.hsluvSaturation : cfg.hslSaturation
+            property int lightness: cfg.colorSpaceHSLuv ? cfg.hsluvLightness : cfg.hslLightness
+
+            readonly property int coord_gravity: root.gravity
+            readonly property int coord_inversion: cfg.inversion ? 1 : 0
+
+            blending: true
+            fragmentShader: shaderSourceReader.image_shader_source
+        }
     }
 
     // The buffer of effects with a buffer shader, available to the shaders as iChannel2.
@@ -107,16 +106,26 @@ Item {
         height: iResolution.y
         recursive: true
         live: false
-        sourceItem: shaderSourceReader.enable_buffer ? bufferSE : null
+        sourceItem: bufferLoader.item as Item
     }
 
-    ShadertoyEffect {
-        id: bufferSE
-        inputs: root
+    Loader {
+        id: bufferLoader
+        active: shaderSourceReader.enable_buffer
+        sourceComponent: ShadertoyEffect {
+            inputs: root
+            visible: false
+            width: iResolution.x
+            height: iResolution.y
+            fragmentShader: shaderSourceReader.buffer_shader_source
+        }
+    }
+
+    // The texture.png of the effect, available to the shaders as iChannel3.
+    Image {
+        id: textureImage
         visible: false
-        width: iResolution.x
-        height: iResolution.y
-        fragmentShader: shaderSourceReader.buffer_shader_source
+        source: shaderSourceReader.texture_uri
     }
 
     readonly property string error_message: {
@@ -124,10 +133,10 @@ Item {
             return shaderSourceReader.error_message
         if (!shaderSourceReader.loaded)
             return i18n("Error: Failed to load the visual effect. Please choose another visual effect in the configuration dialog.")
-        if (mainSE.status == ShaderEffect.Error)
-            return i18n("Error: Failed to compile image shader.") + mainSE.log
-        if (shaderSourceReader.enable_buffer && bufferSE.status == ShaderEffect.Error)
-            return i18n("Error: Failed to compile buffer shader.") + bufferSE.log
+        if (mainLoader.item?.status === ShaderEffect.Error)
+            return i18n("Error: Failed to compile image shader.") + mainLoader.item.log
+        if (bufferLoader.item?.status === ShaderEffect.Error)
+            return i18n("Error: Failed to compile buffer shader.") + bufferLoader.item.log
         return wsConnection.error_message
     }
 
@@ -141,8 +150,8 @@ Item {
         id: iMouseArea
         anchors.fill: parent
 
-        readonly property double current_x: root.gravity < 3 ? (cfg.inversion ? (mainSE.width - mouseX) : mouseX) : (cfg.inversion ? mouseY : (mainSE.height - mouseY))
-        readonly property double current_y: [mainSE.height - mouseY, mouseY, mainSE.width - mouseX, mouseX][root.gravity - 1]
+        readonly property double current_x: root.gravity < 3 ? (cfg.inversion ? (width - mouseX) : mouseX) : (cfg.inversion ? mouseY : (height - mouseY))
+        readonly property double current_y: [height - mouseY, mouseY, width - mouseX, mouseX][root.gravity - 1]
         property double lastdown_x
         property double lastdown_y
         property double lastclick_x

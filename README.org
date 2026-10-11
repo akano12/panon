@@ -54,11 +54,8 @@ cd panon
 git submodule update --init
 
 # Build translations (optional)
-mkdir build
-cd build
-cmake ../translations
-make install DESTDIR=../plasmoid/contents/locale
-cd ..
+cmake -S translations -B build -DCMAKE_INSTALL_PREFIX="$PWD/plasmoid/contents/locale"
+cmake --build build --target install
 
 # To install
 kpackagetool6 -t Plasma/Applet --install plasmoid

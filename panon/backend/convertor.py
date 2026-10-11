@@ -1,5 +1,7 @@
-import numpy as np
 import base64
+import struct
+
+import numpy as np
 
 
 class Numpy2Str:
@@ -18,10 +20,13 @@ class Numpy2Str:
         return 'image/bmp;base64,' + base64.b64encode(head + body).decode()
 
     def _head(self, body_size, width, height):
-        return b'BM' + (54 + body_size).to_bytes(4, 'little') +\
-                b'\x00\x00\x00\x006\x00\x00\x00(\x00\x00\x00' + width.to_bytes(4, 'little') +\
-                height.to_bytes(4, 'little') + b'\x01\x00\x18\x00\x00\x00\x00\x00' + body_size.to_bytes(4, 'little') +\
-                b'\xc4\x0e\x00\x00\xc4\x0e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        header_size = 14 + 40
+        # BITMAPFILEHEADER: signature, file size, reserved, offset of the pixel data
+        file_header = struct.pack('<2sIHHI', b'BM', header_size + body_size, 0, 0, header_size)
+        # BITMAPINFOHEADER: header size, width, height, planes, bits per pixel, no compression,
+        # image size, horizontal and vertical resolution (96 DPI), colors in palette, important colors
+        info_header = struct.pack('<IiiHHIIiiII', 40, width, height, 1, 24, 0, body_size, 3780, 3780, 0, 0)
+        return file_header + info_header
 
     def _body(self, data):
         data_length, _ = data.shape

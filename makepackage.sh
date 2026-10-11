@@ -11,10 +11,7 @@ find -L ./plasmoid/contents/scripts -name __pycache__ -type d -prune -exec rm -r
 rm -f ./panon.plasmoid
 
 # i18n
-mkdir -p build
-cd build
-cmake ../translations
-make install DESTDIR=../plasmoid/contents/locale
-cd ..
+cmake -S translations -B build -DCMAKE_INSTALL_PREFIX="$PWD/plasmoid/contents/locale"
+cmake --build build --target install
 
 zip -r panon.plasmoid ./plasmoid

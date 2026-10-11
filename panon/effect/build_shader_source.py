@@ -22,10 +22,11 @@ from .helper import applet_effect_home, cache_dir, read_file
 from . import get_effect_list
 from .. import logger
 
-ERROR_UNDECLARED_ARGUMENT = 1
-ERROR_COMPILATION = 2
-ERROR_QSB_NOT_FOUND = 3
-ERROR_INVALID_ARGUMENT = 4
+# Error codes reported to ShaderSource.qml
+ERROR_UNDECLARED_ARGUMENT = 'undeclared-argument'
+ERROR_COMPILATION = 'compilation'
+ERROR_QSB_NOT_FOUND = 'qsb-not-found'
+ERROR_INVALID_ARGUMENT = 'invalid-argument'
 
 QSB_ARGS = ['--glsl', '150,330,300 es']
 
