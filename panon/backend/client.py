@@ -21,6 +21,15 @@ from .. import logger
 SAMPLE_RATE = 44100
 
 
+def compress(values, knee=0.6):
+    """
+    Map values to [0, 1). Values below the knee are kept, larger values approach 1
+    asymptotically, so that loud peaks keep their shape instead of being cut off.
+    """
+    over = np.maximum(values - knee, 0) / (1 - knee)
+    return np.minimum(values, knee) + (1 - knee) * over / (1 + over)
+
+
 def parse_args():
     parser = argparse.ArgumentParser(prog='panon client')
     parser.add_argument('url')
@@ -92,7 +101,7 @@ async def mainloop(args, spectrum_source, beats_detector):
                 wave_data = (wave_data + wave_max) / wave_max / 2 * 255
                 obj['wave'] = n2s.convert(wave_data)
             if args.enable_spectrum_data:
-                spectrum_data = np.clip(spectrum_data[1:] / 3.0, 0, 0.99) * 256
+                spectrum_data = compress(spectrum_data[1:] / 3.0) * 255
                 spectrum_data_m = n2s.convert(spectrum_data)
                 # When only spectrum data is enabled, send raw data to reduce cpu usage.
                 if not args.enable_wave_data:
