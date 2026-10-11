@@ -1,4 +1,7 @@
+import contextlib
+
 import numpy as np
+
 from .. import logger
 
 
@@ -64,12 +67,10 @@ class SoundCardSource(Source):
         super().__init__(channel_count, sample_rate, fps)
         import soundcard
         self.sc = soundcard
-        try:
-            self.sc.set_name('Panon')
-        except (AttributeError, NotImplementedError):
-            pass
+        self.sc.set_name('Panon')
         self.device_id = device_id
         self.monitored_speaker_id = None
+        self.recorders = contextlib.ExitStack()
         self.streams = []
         self.open(self.get_microphones())
 
@@ -94,13 +95,11 @@ class SoundCardSource(Source):
         return [sc.get_microphone(self.device_id, include_loopback=True)]
 
     def open(self, mics):
-        for stream in self.streams:
-            stream.__exit__(None, None, None)
-        self.streams = []
-        for mic in mics:
-            stream = mic.recorder(self.sample_rate, self.channel_count, self.frames())
-            stream.__enter__()
-            self.streams.append(stream)
+        self.recorders.close()
+        self.streams = [
+            self.recorders.enter_context(mic.recorder(self.sample_rate, self.channel_count, self.frames()))
+            for mic in mics
+        ]
 
     def update_device(self):
         if self.device_id != 'smart':

@@ -4,15 +4,12 @@ import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 import org.kde.kcmutils as KCM
 
-import "../utils.js" as Utils
-
 KCM.SimpleKCM {
     id: page
 
     // Show changes in the widget before they are applied.
     readonly property ConfigPreview preview: ConfigPreview { configPage: page }
 
-    property alias cfg_colorSpaceHSL: colorSpaceHSL.checked
     property alias cfg_colorSpaceHSLuv: colorSpaceHSLuv.checked
 
     property alias cfg_hslHueFrom: hslHueFrom.value
@@ -44,17 +41,14 @@ KCM.SimpleKCM {
             text: i18n("Randomize colors")
             onClicked: {
                 colorSpaceHSLuv.checked = true
-                const random_seed = Math.random()
-                hsluvHueFrom.value = 360 * Utils.random(random_seed + 1)
-                hsluvHueTo.value = 1080 * Utils.random(random_seed + 2) - 360
-
-                if (Math.abs(hsluvHueTo.value - hsluvHueFrom.value) > 100) {
-                    hsluvSaturation.value = 80 + 20 * Utils.random(random_seed + 3)
-                    hsluvLightness.value = 60 + 20 * Utils.random(random_seed + 5)
-                } else {
-                    hsluvSaturation.value = 80 + 20 * Utils.random(random_seed + 4)
-                    hsluvLightness.value = 100 * Utils.random(random_seed + 6)
-                }
+                hsluvHueFrom.value = 360 * Math.random()
+                hsluvHueTo.value = 1080 * Math.random() - 360
+                hsluvSaturation.value = 80 + 20 * Math.random()
+                // A wide hue range looks best with a medium lightness.
+                if (Math.abs(hsluvHueTo.value - hsluvHueFrom.value) > 100)
+                    hsluvLightness.value = 60 + 20 * Math.random()
+                else
+                    hsluvLightness.value = 100 * Math.random()
             }
         }
 
@@ -64,6 +58,7 @@ KCM.SimpleKCM {
             id: colorSpaceHSL
             Kirigami.FormData.label: i18nc("@label", "Color space:")
             text: i18nc("@option:radio", "HSL")
+            checked: !colorSpaceHSLuv.checked
             QQC2.ButtonGroup.group: colorGroup
         }
 

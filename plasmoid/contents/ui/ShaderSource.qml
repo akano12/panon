@@ -1,5 +1,4 @@
 import QtQuick
-import org.kde.plasma.plasmoid
 import org.kde.plasma.plasma5support as P5Support
 import "utils.js" as Utils
 

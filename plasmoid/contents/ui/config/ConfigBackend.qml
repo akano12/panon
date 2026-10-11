@@ -24,6 +24,9 @@ KCM.SimpleKCM {
 
     property string cfg_pulseaudioDevice
 
+    // [{name, id}] of the PulseAudio back-end, see get_pa_devices.py.
+    property var devices: []
+
     // The indices of these levels are used by spectrum.py.
     // ranges: [from Hz, to Hz, latency in ms]
     readonly property var bassResolutionLevels: [
@@ -41,24 +44,24 @@ KCM.SimpleKCM {
         QQC2.ComboBox {
             id: backend
             Kirigami.FormData.label: i18n("Back-end:")
-            model: ['PortAudio', 'PulseAudio', 'fifo']
+            model: Utils.backends
+            textRole: 'name'
         }
 
         QQC2.ComboBox {
             id: pulseaudioDevice
             Kirigami.FormData.label: i18n("Input device:")
-            visible: backend.currentText == 'PulseAudio'
-            model: ListModel {
-                id: pdItems
-            }
+            visible: Utils.backends[backend.currentIndex].id === 'soundcard'
+            model: devices
             textRole: 'name'
-            onActivated: cfg_pulseaudioDevice = pdItems.get(currentIndex).id
+            currentIndex: devices.findIndex(device => device.id === cfg_pulseaudioDevice)
+            onActivated: cfg_pulseaudioDevice = devices[currentIndex].id
         }
 
         QQC2.TextField {
             id: fifoPath
             Kirigami.FormData.label: i18n("Fifo path:")
-            visible: backend.currentText == 'fifo'
+            visible: Utils.backends[backend.currentIndex].id === 'fifo'
         }
 
         QQC2.CheckBox {
@@ -103,20 +106,14 @@ KCM.SimpleKCM {
         engine: 'executable'
         connectedSources: [Utils.pythonCommand('panon.backend.get_pa_devices')]
         onNewData: (sourceName, data) => {
-            pdItems.append({ name: 'default', id: 'default' })
             const lst = JSON.parse(data.stdout || '[]')
-            for (const device of lst)
-                pdItems.append(device)
-            if (lst.length > 1) {
-                pdItems.append({ name: i18n("Monitor of Current Device"), id: 'smart' })
-                pdItems.append({ name: i18n("Mixing All Speakers"), id: 'allspeakers' })
-                pdItems.append({ name: i18n("Mixing All Microphones"), id: 'allmicrophones' })
-                pdItems.append({ name: i18n("Mixing All Microphones and Speakers"), id: 'all' })
-            }
-
-            for (let i = 0; i < pdItems.count; i++)
-                if (pdItems.get(i).id == cfg_pulseaudioDevice)
-                    pulseaudioDevice.currentIndex = i
+            const mixed = lst.length > 1 ? [
+                { name: i18n("Monitor of Current Device"), id: 'smart' },
+                { name: i18n("Mixing All Speakers"), id: 'allspeakers' },
+                { name: i18n("Mixing All Microphones"), id: 'allmicrophones' },
+                { name: i18n("Mixing All Microphones and Speakers"), id: 'all' },
+            ] : []
+            devices = [{ name: 'default', id: 'default' }, ...lst, ...mixed]
             disconnectSource(sourceName)
         }
     }

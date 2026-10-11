@@ -69,9 +69,6 @@
   </group>
   <group name="Colors">
 
-    <entry name="colorSpaceHSL" type="Bool">
-      <default>true</default>
-    </entry>
     <entry name="colorSpaceHSLuv" type="Bool">
       <default>false</default>
     </entry>

@@ -21,6 +21,21 @@ Item {
     property bool audioAvailable
     property string fps_message: ""
 
+    // The inputs of the shaders, see ShadertoyEffect.qml.
+    property double iTime
+    property double iTimeDelta
+    property double iBeat
+    property int iFrame: 0
+    readonly property vector3d iResolution: gravity <= 2 ? Qt.vector3d(width, height, 0) : Qt.vector3d(height, width, 0)
+    readonly property vector4d iMouse: iMouseArea.i
+    property Item iChannel0
+    property Item iChannel1
+    readonly property Item iChannel2: bufferSES
+    readonly property Item iChannel3: Image {
+        visible: false
+        source: shaderSourceReader.texture_uri
+    }
+
     property double time_first_frame: Date.now()
     property double time_fps_start: Date.now()
     property double time_prev_frame: Date.now()
@@ -58,8 +73,9 @@ Item {
     Layout.fillWidth: !vertical && cfg.autoExtend
     Layout.fillHeight: vertical && cfg.autoExtend
 
-    ShaderEffect {
+    ShadertoyEffect {
         id: mainSE
+        inputs: root
 
         Behavior on hueFrom { NumberAnimation { duration: 1000 } }
         Behavior on hueTo { NumberAnimation { duration: 1000 } }
@@ -73,29 +89,6 @@ Item {
         property int saturation: cfg.colorSpaceHSLuv ? cfg.hsluvSaturation : cfg.hslSaturation
         property int lightness: cfg.colorSpaceHSLuv ? cfg.hsluvLightness : cfg.hslLightness
 
-        readonly property vector4d iMouse: iMouseArea.i
-
-        property double iTime
-        property double iTimeDelta
-        property double iBeat
-        readonly property vector3d iResolution: root.gravity <= 2 ? Qt.vector3d(mainSE.width, mainSE.height, 0) : Qt.vector3d(mainSE.height, mainSE.width, 0)
-        property int iFrame: 0
-        readonly property vector3d iChannelResolution0: textureResolution(iChannel0)
-        readonly property vector3d iChannelResolution1: textureResolution(iChannel1)
-        readonly property vector3d iChannelResolution2: textureResolution(iChannel2)
-        readonly property vector3d iChannelResolution3: textureResolution(iChannel3)
-        property Item iChannel0
-        property Item iChannel1
-        readonly property Item iChannel2: bufferSES
-        readonly property Item iChannel3: Image {
-            visible: false
-            source: shaderSourceReader.texture_uri
-        }
-
-        function textureResolution(item) {
-            return item ? Qt.vector3d(item.width, item.height, 0) : Qt.vector3d(0, 0, 0)
-        }
-
         readonly property int coord_gravity: root.gravity
         readonly property int coord_inversion: cfg.inversion ? 1 : 0
 
@@ -106,36 +99,23 @@ Item {
         fragmentShader: shaderSourceReader.image_shader_source
     }
 
+    // The buffer of effects with a buffer shader, available to the shaders as iChannel2.
     ShaderEffectSource {
         id: bufferSES
         visible: false
-        width: mainSE.iResolution.x
-        height: mainSE.iResolution.y
+        width: iResolution.x
+        height: iResolution.y
         recursive: true
         live: false
         sourceItem: shaderSourceReader.enable_buffer ? bufferSE : null
     }
 
-    ShaderEffect {
+    ShadertoyEffect {
         id: bufferSE
+        inputs: root
         visible: false
-        width: mainSE.iResolution.x
-        height: mainSE.iResolution.y
-
-        readonly property double iTime: mainSE.iTime
-        readonly property double iTimeDelta: mainSE.iTimeDelta
-        readonly property double iBeat: mainSE.iBeat
-        readonly property vector3d iResolution: mainSE.iResolution
-        readonly property int iFrame: mainSE.iFrame
-        readonly property vector3d iChannelResolution0: mainSE.iChannelResolution0
-        readonly property vector3d iChannelResolution1: mainSE.iChannelResolution1
-        readonly property vector3d iChannelResolution2: mainSE.iChannelResolution2
-        readonly property vector3d iChannelResolution3: mainSE.iChannelResolution3
-        readonly property Item iChannel0: mainSE.iChannel0
-        readonly property Item iChannel1: mainSE.iChannel1
-        readonly property Item iChannel2: mainSE.iChannel2
-        readonly property Item iChannel3: mainSE.iChannel3
-        readonly property vector4d iMouse: mainSE.iMouse
+        width: iResolution.x
+        height: iResolution.y
         fragmentShader: shaderSourceReader.buffer_shader_source
     }
 
@@ -159,7 +139,6 @@ Item {
 
     MouseArea {
         id: iMouseArea
-        hoverEnabled: true
         anchors.fill: parent
 
         readonly property double current_x: root.gravity < 3 ? (cfg.inversion ? (mainSE.width - mouseX) : mouseX) : (cfg.inversion ? mouseY : (mainSE.height - mouseY))
@@ -195,17 +174,18 @@ Item {
         onImgsReadyChanged: {
             audioAvailable = imgsReady.audioAvailable
             const time_current_frame = Date.now()
-            mainSE.iTime = (time_current_frame - time_first_frame) / 1000.0
-            mainSE.iTimeDelta = (time_current_frame - time_prev_frame) / 1000.0
-            mainSE.iFrame += 1
-            if (cfg.showFps && mainSE.iFrame % 30 == 1) {
+            iTime = (time_current_frame - time_first_frame) / 1000.0
+            iTimeDelta = (time_current_frame - time_prev_frame) / 1000.0
+            iFrame += 1
+            // Measure the fps every 30 frames.
+            if (cfg.showFps && iFrame % 30 == 1) {
                 fps_message = 'fps:' + Math.round(1000 * 30 / (time_current_frame - time_fps_start))
                 time_fps_start = time_current_frame
             }
 
-            mainSE.iChannel0 = imgsReady.wave
-            mainSE.iChannel1 = imgsReady.spectrum
-            mainSE.iBeat = imgsReady.beat
+            iChannel0 = imgsReady.wave
+            iChannel1 = imgsReady.spectrum
+            iBeat = imgsReady.beat
             if (shaderSourceReader.enable_buffer)
                 bufferSES.scheduleUpdate()
 

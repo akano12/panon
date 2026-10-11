@@ -12,12 +12,11 @@ import sys
 import numpy as np
 import websockets
 
-from . import spectrum
 from . import source
 from .convertor import Numpy2Str
 from .decay import Decay
+from .spectrum import NUM_CHANNEL, SAMPLE_RATE, Spectrum
 from .. import logger
-from .spectrum import NUM_CHANNEL, SAMPLE_RATE
 
 
 def compress(values, knee=0.6):
@@ -64,7 +63,7 @@ def create_beats_detector(args):
 
 async def mainloop(args, spectrum_source, beats_detector):
     async with websockets.connect(args.url) as websocket:
-        spec = spectrum.Spectrum()
+        spec = Spectrum()
         decay = Decay()
         n2s = Numpy2Str()
 

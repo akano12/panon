@@ -48,8 +48,8 @@ class Spectrum:
     def updateHistory(self, data):
         len_history, _ = self.history.shape
 
-        if data is not None and data.shape[0] > 0:
-            len_data, _ = data.shape
+        len_data, _ = data.shape
+        if len_data > 0:
             index = self.history_index
 
             if index + len_data > len_history:

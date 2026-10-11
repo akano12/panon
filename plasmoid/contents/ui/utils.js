@@ -21,7 +21,10 @@ function pythonCommand(module, args) {
         + (args || []).map(arg => ' ' + shellQuote(arg)).join('')
 }
 
-function random(seed) {
-    const x = Math.sin(seed * 1000) * 10000
-    return x - Math.floor(x)
-}
+// The audio back-ends, indexed by the backendIndex setting.
+// id is the --backend argument of panon.backend.client.
+const backends = [
+    { id: 'pyaudio', name: 'PortAudio' },
+    { id: 'soundcard', name: 'PulseAudio' },
+    { id: 'fifo', name: 'fifo' },
+]

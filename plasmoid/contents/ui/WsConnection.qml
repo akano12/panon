@@ -1,6 +1,5 @@
 import QtQuick
 import QtWebSockets
-import org.kde.plasma.plasmoid
 import org.kde.plasma.plasma5support as P5Support
 import "utils.js" as Utils
 
@@ -17,10 +16,8 @@ import "utils.js" as Utils
 Item {
 
     required property var cfg
-
-    property MessageQueue queue
-
-    property ShaderSource shaderSource
+    required property MessageQueue queue
+    required property ShaderSource shaderSource
 
     // The last error output of the back-end, cleared once it sends data again.
     property string error_message: ''
@@ -43,7 +40,7 @@ Item {
     readonly property string startBackEnd: {
         if (server.port === 0 || !shaderSource.loaded)
             return ''
-        const backend = ['pyaudio', 'soundcard', 'fifo'][cfg.backendIndex]
+        const backend = Utils.backends[cfg.backendIndex].id
         const args = [server.url.toString(), '--backend=' + backend]
         if (backend === 'soundcard')
             args.push('--device=' + cfg.pulseaudioDevice)

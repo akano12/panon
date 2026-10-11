@@ -168,8 +168,7 @@ def build_shader(files, main_file: Path, arguments_map):
 
 def build(effect, argument_values):
     effect_path = Path(effect.path)
-    is_single_file = effect_path.is_file()
-    image_shader_path = effect_path if is_single_file else effect_path / 'image.frag'
+    image_shader_path = effect_path if effect_path.is_file() else effect_path / 'image.frag'
     buffer_shader_path = effect_path / 'buffer.frag'
 
     # Construct a key-value map to store arguments' names and values.
